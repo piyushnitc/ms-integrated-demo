@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  ams-service.properties: |-
+    ims.connectionURL=http://localhost:8080/incidents
+    ims.value2=value2
+    ims.value3=value3
+kind: ConfigMap
+metadata:
+  name: ams-service
+  namespace: default

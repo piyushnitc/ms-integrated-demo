@@ -1,0 +1,33 @@
+#bootstrap-multi-cm.yaml
+management: 
+   endpoint: 
+      health: 
+         enabled: true 
+      info: 
+         enabled: true 
+      restart:
+         enabled: true 
+   endpoints: 
+      web: 
+         exposure: 
+            include: info,health,refresh
+   security:   
+      enabled: false 
+      
+server: 
+   port: 
+      5052 
+
+spring: 
+   application: 
+      name: ams-service 
+   cloud: 
+      kubernetes: 
+         config: 
+            sources:
+               - namespace: default
+                 name: ams-service
+         reload: 
+            enabled: true 
+            mode: event
+            strategy: refresh

@@ -1,0 +1,130 @@
+#bootstrap-multi-cm.yaml
+management: 
+   endpoint: 
+      health: 
+         enabled: true 
+      info: 
+         enabled: true 
+      restart:
+         enabled: true 
+   endpoints: 
+      web: 
+         exposure: 
+            include: info,health,refresh
+   security:   
+      enabled: false 
+      
+server: 
+   port: 
+      5052 
+
+spring: 
+   application: 
+      name: ams-service 
+   cloud: 
+      kubernetes: 
+         config: 
+            sources:
+               - namespace: default
+                 name: ams-service
+         reload: 
+            enabled: true 
+            mode: event
+            strategy: refresh
+
+management.health.diskspace.enabled: false
+management.health.circuitbreakers.enabled: true
+management.health.ratelimiters.enabled: false
+
+info:
+    name: ${spring.application.name}
+    description: ams-service demo
+    environment: ${spring.profiles.active}
+    version: 0.0.1
+
+management.metrics.tags.application: ${spring.application.name}
+management.metrics.distribution.percentiles-histogram.http.server.requests: true
+management.metrics.distribution.percentiles-histogram.resilience4j.circuitbreaker.calls: true
+
+resilience4j.circuitbreaker:
+    configs:
+        default:
+            registerHealthIndicator: true
+            slidingWindowType: COUNT_BASED
+            slidingWindowSize: 10
+            minimumNumberOfCalls: 5
+            permittedNumberOfCallsInHalfOpenState: 10
+            automaticTransitionFromOpenToHalfOpenEnabled: true
+            waitDurationInOpenState: 5s
+            failureRateThreshold: 50
+            eventConsumerBufferSize: 10
+            recordExceptions:
+                - org.springframework.web.client.HttpServerErrorException
+                - java.util.concurrent.TimeoutException
+                - java.io.IOException
+                - com.nbn.ms.AMS.exception.BusinessException
+    instances:
+        backendA:
+            baseConfig: default
+            
+resilience4j.retry:
+    configs:
+        default:
+            maxRetryAttempts: 3
+            waitDuration: 10
+            retryExceptions:
+                - org.springframework.web.client.HttpServerErrorException
+                - java.util.concurrent.TimeoutException
+                - java.io.IOException
+                - com.nbn.ms.AMS.exception.BusinessException
+    instances:
+        backendA:
+            baseConfig: default
+
+resilience4j.bulkhead:
+    configs:
+        default:
+            maxConcurrentCalls: 10
+    instances:
+        backendA:
+            maxConcurrentCalls: 5
+            maxWaitDuration: 50ms
+
+resilience4j.thread-pool-bulkhead:
+    configs:
+        default:
+            maxThreadPoolSize: 4
+            coreThreadPoolSize: 2
+            queueCapacity: 2
+    instances:
+        backendA:
+            baseConfig: default
+
+resilience4j.ratelimiter:
+    configs:
+        default:
+            registerHealthIndicator: false
+            limitForPeriod: 5
+            limitRefreshPeriod: 1ms
+            timeoutDuration: 0
+            eventConsumerBufferSize: 100
+    instances:
+        backendA:
+            baseConfig: default
+            
+resilience4j.timelimiter:
+    configs:
+        default:
+            cancelRunningFuture: false
+            timeoutDuration: 2s
+    instances:
+        backendA:
+            baseConfig: default
+
+resilience4j:
+  circuitbreaker:
+    circuitBreakerAspectOrder: 1
+  retry:
+    retryAspectOrder: 2
+  ratelimiter: 
+     rateLimiterAspectOrder: 3

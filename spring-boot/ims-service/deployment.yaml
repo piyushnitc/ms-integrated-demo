@@ -1,0 +1,106 @@
+# This deployment.yaml files caters for the following
+# 1. Multiple Config Map mounted as volume.
+
+#deployment-multi-cm.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: ims-service
+ namespace: default
+ labels:
+  app: ims-service
+spec:
+ replicas: 1
+ selector:
+  matchLabels:
+   app: ims-service
+ template:
+  metadata:
+   labels:
+    app: ims-service
+  spec:
+   containers:
+    - name: ims-service
+      image: ims-service
+      env: 
+         - name: NEW_RELIC_LICENSE_KEY      
+           value: "d857ee3e095018151886e849035e4ac1f122NRAL"  
+         - name: NEW_RELIC_API_KEY      
+           value: "NRRA-32f8d82eff0445f3c0edd8d89e88c9c0f1436c395e" 
+         - name: NEW_RELIC_DISTRIBUTED_TRACING      
+           value: "true"
+      imagePullPolicy: Never
+      ports:
+       - containerPort: 5053
+      volumeMounts:
+       - name: config-1
+         mountPath: /etc/config/config-1
+         readOnly: true
+   volumes:
+    - name: config-1
+      configMap: 
+         name: ims-service
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: ims-service
+spec:
+  selector:
+    app: ims-service
+  ports:
+  - protocol: TCP
+    port: 5053
+    nodePort: 32321
+  type: NodePort
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: ims-service
+rules:
+- apiGroups:
+  - ""
+  - extensions
+  - apps
+  resources:
+  - services
+  - pods
+  - endpoints
+  - namespaces
+  - configmaps
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ims-service
+  namespace: default
+roleRef:
+  apiGroup: ""
+  kind: Role
+  name: ims-service
+subjects:
+- kind: ServiceAccount
+  name: default
+  apiGroup: ""
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ims-service-view
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  # Authorize specific ims-service accounts:
+  - kind: ServiceAccount
+    name: ims-service
+    namespace: default

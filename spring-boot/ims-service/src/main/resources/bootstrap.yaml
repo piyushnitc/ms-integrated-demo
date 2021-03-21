@@ -1,0 +1,25 @@
+# bootstrap-app-name
+# 1.Application name is same as config map name.
+
+management: 
+   endpoint: 
+      health: 
+         enabled: true 
+      info: 
+         enabled: true 
+      restart:
+         enabled: true 
+   endpoints: 
+      web: 
+         exposure: 
+            include: info,health,refresh
+   security:   
+      enabled: false 
+      
+server: 
+   port: 
+      5053
+
+spring: 
+   application: 
+      name: ims-service 

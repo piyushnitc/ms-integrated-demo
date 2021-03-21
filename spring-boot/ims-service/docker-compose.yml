@@ -1,0 +1,19 @@
+version: '3.2' # This version must be 3.2+ for the correct bind mounting syntax
+
+services:
+  java-spring-app:
+    build: .
+    environment:
+      - NEW_RELIC_LICENSE_KEY=eu01xx54a28c0ad89a079461351caa2c5d9dNRAL # Here you can optionally set the license key
+      - NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true
+    ports:
+      - "8080:8080"
+#    volumes:
+#      - type: bind
+#        source: ./test.log- # The path to where you want the logs stored on your local machine.
+#        target: /var/log/test.log # The path to the logs folder inside the container.
+#    tty: true
+#    stdin_open: true
+#    restart: always
+
+# docker-compose up
